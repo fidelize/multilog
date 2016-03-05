@@ -4,6 +4,8 @@ namespace Karlomikus\Multilog;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Container\Container as App;
 use Karlomikus\Multilog\Contracts\MultilogInterface;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -21,6 +23,7 @@ class Multilog implements MultilogInterface
 
     /**
      * @param Config $config
+     * @param App $app
      */
     public function __construct(Config $config, App $app)
     {
@@ -91,6 +94,11 @@ class Multilog implements MultilogInterface
         // Daily rotation
         if ($config['daily']) {
             $handler = new RotatingFileHandler($filepath, 1);
+        }
+
+        if (isset($config['format'])) {
+            $format = $config['format'];
+            $handler->setFormatter(new LineFormatter($format['output'], $format['date']));
         }
 
         $logger->pushHandler($handler);
