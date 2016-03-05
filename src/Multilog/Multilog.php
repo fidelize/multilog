@@ -2,7 +2,9 @@
 namespace Karlomikus\Multilog;
 
 use Illuminate\Contracts\Config\Repository as Config;
+use Illuminate\Contracts\Container\Container as App;
 use Karlomikus\Multilog\Contracts\MultilogInterface;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 /**
@@ -13,13 +15,16 @@ use Monolog\Logger;
  */
 class Multilog implements MultilogInterface
 {
-    private $channels;
+    private $channels = [];
+
+    private $app;
 
     /**
      * @param Config $config
      */
-    public function __construct(Config $config)
+    public function __construct(Config $config, App $app)
     {
+        $this->app = $app;
         $loggers = $config->get('multilog');
         $this->initLoggers($loggers);
     }
@@ -28,11 +33,11 @@ class Multilog implements MultilogInterface
      * Get monolog instance for a specific channel
      *
      * @param  string $name Channel name
-     * @return Monolog\Logger|null
+     * @return \Monolog\Logger|null
      */
     public function channel($name)
     {
-        if (in_array($name, $this->channels)) {
+        if (array_key_exists($name, $this->channels)) {
             return $this->channels[$name];
         }
 
@@ -43,7 +48,7 @@ class Multilog implements MultilogInterface
      * Alias for channel
      *
      * @param  string $name
-     * @return Monolog\Logger
+     * @return \Monolog\Logger
      */
     public function c($name)
     {
@@ -59,7 +64,7 @@ class Multilog implements MultilogInterface
      */
     private function initLoggers(array $loggers)
     {
-        foreach ($loggers as $channel => $logger) {
+        foreach ($loggers as $channel => $config) {
             $this->createLogger($channel, $config);
         }
     }
@@ -75,7 +80,20 @@ class Multilog implements MultilogInterface
      */
     private function createLogger($channel, array $config)
     {
+        // Setup configuration
+        // Use default laravel logs path
+        $storagePath = $this->app->make('path.storage');
+        $filepath = $storagePath . '/storage/logs/' . $config['stream'];
+
         $logger = new Logger($channel);
+        $handler = new StreamHandler($filepath);
+
+        // Daily rotation
+        if ($config['daily']) {
+            $handler = new RotatingFileHandler($filepath, 1);
+        }
+
+        $logger->pushHandler($handler);
 
         $this->channels[$channel] = $logger;
     }

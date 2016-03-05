@@ -27,7 +27,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Karlomikus\\Multilog\\": "src"
+            "Karlomikus\\Multilog\\": "src/Multilog"
         }
     },
     "autoload-dev": {
