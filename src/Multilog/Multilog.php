@@ -96,6 +96,7 @@ class Multilog implements MultilogInterface
             $handler = new RotatingFileHandler($filepath, 1);
         }
 
+        // Format line
         if (isset($config['format'])) {
             $format = $config['format'];
             $handler->setFormatter(new LineFormatter($format['output'], $format['date']));
