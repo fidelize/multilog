@@ -1,5 +1,9 @@
 # Laravel Multilog
 
+[![Build Status](https://travis-ci.org/karlomikus/multilog.svg?branch=master)](https://travis-ci.org/karlomikus/multilog)
+[![Latest Stable Version](https://poser.pugx.org/karlomikus/multilog/v/stable)](https://packagist.org/packages/karlomikus/multilog)
+[![License](https://poser.pugx.org/karlomikus/multilog/license)](https://packagist.org/packages/karlomikus/multilog)
+
 Easily add multiple monolog channels to your Laravel 5.2.* application.
 
 ## Install
