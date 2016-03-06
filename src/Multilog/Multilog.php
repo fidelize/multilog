@@ -86,7 +86,7 @@ class Multilog implements MultilogInterface
         // Setup configuration
         // Use default laravel logs path
         $storagePath = $this->app->make('path.storage');
-        $filepath = $storagePath . '/storage/logs/' . $config['stream'];
+        $filepath = $storagePath . '/logs/' . $config['stream'];
 
         $logger = new Logger($channel);
         $handler = new StreamHandler($filepath);
