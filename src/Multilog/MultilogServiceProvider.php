@@ -13,7 +13,7 @@ class MultilogServiceProvider extends ServiceProvider
         );
 
         $this->publishes([
-            __DIR__ . '/config/multilog.php' => config_path('multilog.php'),
+            __DIR__ . '/config/multilog.php' => app()->basePath() . '/config/multilog.php',
         ]);
     }
 }

@@ -19,6 +19,8 @@ class Multilog implements MultilogInterface
 {
     private $channels = [];
 
+    private $config;
+
     private $app;
 
     /**
@@ -28,7 +30,8 @@ class Multilog implements MultilogInterface
     public function __construct(Config $config, App $app)
     {
         $this->app = $app;
-        $loggers = $config->get('multilog');
+        $this->config = $config;
+        $loggers = $config->get('multilog.channels');
         $this->initLoggers($loggers);
     }
 
@@ -40,11 +43,21 @@ class Multilog implements MultilogInterface
      */
     public function channel($name)
     {
+        // Existing logger instance
         if (array_key_exists($name, $this->channels)) {
             return $this->channels[$name];
         }
 
-        return null;
+        // Check if it is a grouped channel like "industries.acme"
+        if (false !== strpos($name, '.')) {
+            $group = explode('.', $name)[0] . '.*';
+            $loggers = $this->config->get('multilog.channels');
+
+            if (isset($loggers[$group])) {
+                $this->createLogger($name, $loggers[$group]);
+                return $this->channels[$name];
+            }
+        }
     }
 
     /**
@@ -67,43 +80,20 @@ class Multilog implements MultilogInterface
      */
     private function initLoggers(array $loggers)
     {
-        foreach ($loggers as $channel => $config) {
-            $this->createLogger($channel, $config);
+        foreach ($loggers as $channel => $closure) {
+            $this->createLogger($channel, $closure);
         }
     }
 
     /**
-     * Create new logger instance with given
-     * configuration and store it in array
-     * with channel name
+     * Store the logger created via closure in with the given channel name
      *
      * @param  string $channel Channel name
-     * @param  array $config  Channel configuration
+     * @param  \Closure $closure  Logger instantiator
      * @return void
      */
-    private function createLogger($channel, array $config)
+    private function createLogger($channel, \Closure $closure)
     {
-        // Setup configuration
-        // Use default laravel logs path
-        $storagePath = $this->app->make('path.storage');
-        $filepath = $storagePath . '/logs/' . $config['stream'];
-
-        $logger = new Logger($channel);
-        $handler = new StreamHandler($filepath);
-
-        // Daily rotation
-        if ($config['daily']) {
-            $handler = new RotatingFileHandler($filepath, 1);
-        }
-
-        // Format line
-        if (isset($config['format'])) {
-            $format = $config['format'];
-            $handler->setFormatter(new LineFormatter($format['output'], $format['date']));
-        }
-
-        $logger->pushHandler($handler);
-
-        $this->channels[$channel] = $logger;
+        $this->channels[$channel] = $closure($channel);
     }
 }

@@ -4,101 +4,73 @@ use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Container\Container as App;
 use Karlomikus\Multilog\Multilog;
 use Mockery as m;
+use Monolog\Logger;
 
 class MultilogTest extends PHPUnit_Framework_TestCase
 {
     private $config;
 
     /** @test */
-    public function it_creates_a_channel_with_minimum_configuration()
+    public function it_creates_a_channel_from_given_callback()
     {
         $stubConfig = [
-            'test' => [
-                'stream' => 'test.log',
-                'daily'  => false
-            ]
+            'test' => function ($channel) {
+                return new Logger($channel);
+            }
         ];
 
         $configMock = m::mock(Config::class);
         $appMock = m::mock(App::class);
 
-        $configMock->shouldReceive('get')->with('multilog')->andReturn($stubConfig);
+        $configMock->shouldReceive('get')->with('multilog.channels')->andReturn($stubConfig);
         $appMock->shouldReceive('make')->with('path.storage')->andReturn('/test/storage');
         $multilog = new Multilog($configMock, $appMock);
 
         $logger = $multilog->channel('test');
         $this->assertInstanceOf(Monolog\Logger::class, $logger);
-        $this->assertInstanceOf(Monolog\Handler\StreamHandler::class, $logger->getHandlers()[0]);
+        $this->assertEquals('test', $logger->getName());
     }
 
     /** @test */
-    public function it_creates_a_channel_with_daily_configuration()
+    public function it_creates_a_channel_with_a_wildcard_configuration()
     {
         $stubConfig = [
-            'test' => [
-                'stream' => 'test.log',
-                'daily'  => true
-            ]
+            'industries.*' => function ($channel) {
+                return new Logger($channel);
+            }
         ];
 
         $configMock = m::mock(Config::class);
         $appMock = m::mock(App::class);
 
-        $configMock->shouldReceive('get')->with('multilog')->andReturn($stubConfig);
+        $configMock->shouldReceive('get')->with('multilog.channels')->andReturn($stubConfig);
         $appMock->shouldReceive('make')->with('path.storage')->andReturn('/test/storage');
         $multilog = new Multilog($configMock, $appMock);
 
-        $logger = $multilog->channel('test');
+        $logger = $multilog->channel('industries.acme');
         $this->assertInstanceOf(Monolog\Logger::class, $logger);
-        $this->assertInstanceOf(Monolog\Handler\RotatingFileHandler::class, $logger->getHandlers()[0]);
-    }
-
-    /** @test */
-    public function it_creates_a_channel_with_full_configuration()
-    {
-        $stubConfig = [
-            'test' => [
-                'stream' => 'test1.log',
-                'daily'  => false,
-                'format' => [
-                    'date'   => 'Y-m-d H:i:s',
-                    'output' => "[%datetime%] %message% %context% %extra%\n",
-                ]
-            ]
-        ];
-
-        $configMock = m::mock(Config::class);
-        $appMock = m::mock(App::class);
-
-        $configMock->shouldReceive('get')->with('multilog')->andReturn($stubConfig);
-        $appMock->shouldReceive('make')->with('path.storage')->andReturn('/test/storage');
-        $multilog = new Multilog($configMock, $appMock);
-
-        $logger = $multilog->channel('test');
-        $this->assertInstanceOf(Monolog\Logger::class, $logger);
-        $this->assertInstanceOf(Monolog\Formatter\LineFormatter::class, $logger->getHandlers()[0]->getFormatter());
+        $this->assertEquals('industries.acme', $logger->getName());
     }
 
     /** @test */
     public function it_call_channel_via_alias()
     {
         $stubConfig = [
-            'test' => [
-                'stream' => 'test.log',
-                'daily'  => false
-            ]
+            'test' => function ($channel) {
+                return new Logger($channel);
+            }
         ];
 
         $configMock = m::mock(Config::class);
         $appMock = m::mock(App::class);
 
-        $configMock->shouldReceive('get')->with('multilog')->andReturn($stubConfig);
+        $configMock->shouldReceive('get')->with('multilog.channels')->andReturn($stubConfig);
         $appMock->shouldReceive('make')->with('path.storage')->andReturn('/test/storage');
         $multilog = new Multilog($configMock, $appMock);
 
         $logger = $multilog->c('test');
         $this->assertInstanceOf(Monolog\Logger::class, $logger);
-        $this->assertInstanceOf(Monolog\Handler\StreamHandler::class, $logger->getHandlers()[0]);
+        $this->assertEquals('test', $logger->getName());
     }
 
     /** @test */
@@ -109,7 +81,7 @@ class MultilogTest extends PHPUnit_Framework_TestCase
         $configMock = m::mock(Config::class);
         $appMock = m::mock(App::class);
 
-        $configMock->shouldReceive('get')->with('multilog')->andReturn($stubConfig);
+        $configMock->shouldReceive('get')->with('multilog.channels')->andReturn($stubConfig);
         $appMock->shouldReceive('make')->with('path.storage')->andReturn('/test/storage');
         $multilog = new Multilog($configMock, $appMock);
 
