@@ -2,10 +2,10 @@
 namespace Karlomikus\Multilog;
 
 use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Logging\Log;
+use Psr\Log\LoggerInterface;
 use Karlomikus\Multilog\Contracts\MultilogInterface;
 
-class LogRedirect implements Log
+class LogRedirect implements LoggerInterface
 {
     protected $config;
     protected $multilog;
