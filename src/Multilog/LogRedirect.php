@@ -24,6 +24,19 @@ class LogRedirect implements LoggerInterface
     }
 
     /**
+     * System is unusable.
+     *
+     * @param string $message
+     * @param array  $context
+     *
+     * @return void
+     */
+    public function emergency($message, array $context = array())
+    {
+        $this->logWithDefaultChannel('emergency', $message, $context);
+    }
+
+    /**
      * Log an alert message to the logs.
      *
      * @param  string  $message
